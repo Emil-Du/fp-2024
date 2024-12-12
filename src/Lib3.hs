@@ -15,9 +15,9 @@ where
 import Control.Concurrent (Chan, newChan, readChan, writeChan)
 import Control.Concurrent.STM (STM, TVar, atomically, readTVar, readTVarIO, writeTVar)
 import qualified Lib2
-import Lib2 (Parser, parseString, runParser)
+import Lib2 (Parser, parseString, parse)
 import System.Directory (doesFileExist)
-import Control.Applicative ((<|>), many) 
+import Control.Applicative ((<|>), many)
 
 data StorageOp = Save String (Chan ()) | Load (Chan (Maybe String))
 
@@ -31,8 +31,7 @@ storageOpLoop storageOpChannel = do
       if fileExists
         then Just <$> readFile fileName >>= writeChan responseChannel
         else writeChan responseChannel Nothing
-  storageOpLoop storageOpChannel 
-
+  storageOpLoop storageOpChannel
 
 fileName :: String
 fileName = "state.txt"
@@ -47,10 +46,11 @@ instance Show Statements where
   show (Single q) = renderQuery q
   show (Batch b) = "begin\n" ++ concatMap ((++ ";\n") . renderQuery) b ++ "end\n"
 
-
 renderQuery :: Lib2.Query -> String
 renderQuery (Lib2.AddReaderQuery (Lib2.ReaderInfo name readerid)) = "add-reader " ++ name ++ " " ++ show readerid
-renderQuery (Lib2.AddBookQuery (Lib2.BookInfo title author genre audience)) = "add-book " ++ title ++ " " ++ author ++ " " ++ show genre ++ " " ++ show audience 
+renderQuery (Lib2.AddBookQuery (Lib2.BookInfo title author genre audience)) = "add-book " ++ title ++ " " ++ author ++ " " ++ show genre ++ " " ++ show audience
+renderQuery (Lib2.RemoveReaderQuery (Lib2.ReaderInfo name readerid)) = "remove-reader " ++ name ++ " " ++ show readerid
+renderQuery (Lib2.RemoveBookQuery (Lib2.BookInfo title author genre audience)) = "remove-book " ++ title ++ " " ++ author ++ " " ++ show genre ++ " " ++ show audience
 
 data Command
   = StatementCommand Statements
@@ -59,17 +59,18 @@ data Command
   deriving (Show, Eq)
 
 parseCommand :: String -> Either String (Command, String)
-parseCommand = runParser command
-
+parseCommand str = case parse command str of
+  (Left err, _) -> Left err
+  (Right cmd, r) -> Right (cmd, r)
 
 parseStatements :: String -> Either String (Statements, String)
-parseStatements = runParser statements
-
+parseStatements str = case parse statements str of
+  (Left err, _) -> Left err
+  (Right s, r) -> Right (s, r)
 
 marshallState :: Lib2.State -> Statements
-marshallState (Lib2.State books readers) = 
+marshallState (Lib2.State books readers) =
   Batch (map Lib2.AddBookQuery books ++ map Lib2.AddReaderQuery readers)
-
 
 renderStatements :: Statements -> String
 renderStatements = show
@@ -83,7 +84,6 @@ loadParser :: Parser Command
 loadParser = do
   _ <- parseString "load"
   return LoadCommand
-
 
 command :: Parser Command
 command = StatementCommand <$> statements <|> loadParser <|> saveParser
@@ -110,11 +110,9 @@ stateTransition state LoadCommand ioChan = do
 stateTransition state (StatementCommand statementList) _ =
   atomically $ atomicStatements state statementList
 
-
-
 transitionThroughList :: Lib2.State -> [Lib2.Query] -> Either String (Maybe String, Lib2.State)
 transitionThroughList _ [] = Left "Empty query list"
-transitionThroughList state (query:remainingQueries) = 
+transitionThroughList state (query:remainingQueries) =
   case Lib2.stateTransition state query of
     Left err -> Left err
     Right (message, newState) ->
@@ -131,21 +129,18 @@ combineMessages (Just msg1) Nothing = Just msg1
 combineMessages Nothing (Just msg2) = Just msg2
 combineMessages (Just msg1) (Just msg2) = Just (msg1 ++ "\n" ++ msg2)
 
-
 atomicStatements :: TVar Lib2.State -> Statements -> STM (Either String (Maybe String))
 atomicStatements state statement = do
   currentState <- readTVar state
   case statement of
-    Batch queries -> 
+    Batch queries ->
       case transitionThroughList currentState queries of
         Left err -> return $ Left err
         Right (message, newState) -> writeTVar state newState >> return (Right message)
-    Single query -> 
+    Single query ->
       case Lib2.stateTransition currentState query of
         Left err -> return $ Left err
         Right (message, newState) -> writeTVar state newState >> return (Right message)
-
-
 
 statements :: Parser Statements
 statements =
@@ -162,4 +157,3 @@ statements =
       return $ Batch batch
   )
     <|> (Single <$> Lib2.query)
-

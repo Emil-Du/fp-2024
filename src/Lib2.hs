@@ -1,9 +1,9 @@
 {-# LANGUAGE InstanceSigs #-}
-{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 
 module Lib2
   ( Query(..),
-    Parser(..),
+    Parser,
+    parse,
     parseString,
     query,
     BookInfo(..),
@@ -24,94 +24,64 @@ module Lib2
     parseBookInfo,
     parseReaderInfo,
     parseBookGenre,
-    parseBookAudience
+    parseBookAudience,
   ) where
     
+
 import Control.Applicative (Alternative (empty), (<|>), many, optional)
+import Control.Monad.Trans.Except (ExceptT, throwE, runExceptT, catchE)
+import qualified Control.Monad.State as StateM
 import qualified Data.Char as C
+import Control.Monad.Trans.Class(lift)
 
-data Parser a = Parser { runParser :: String -> Either String (a, String) }
 
-instance Functor Parser where
-    fmap :: (a -> b) -> Parser a -> Parser b
-    fmap f functor = Parser $ \input ->
-        case runParser functor input of
-            Left e -> Left e
-            Right (v, r) -> Right (f v, r)
+type Parser a = ExceptT String (StateM.State String) a
 
-instance Applicative Parser where
-    pure :: a -> Parser a
-    pure a = Parser $ \input -> Right (a, input)
-    (<*>) :: Parser (a -> b) -> Parser a -> Parser b
-    ff <*> fa = Parser $ \input ->
-        case runParser ff input of
-            Left e1 -> Left e1
-            Right (f, r1) -> case runParser fa r1 of
-                                Left e2 -> Left e2
-                                Right (a, r2) -> Right (f a , r2)
+parse :: Parser a -> String -> (Either String a, String)
+parse parser = StateM.runState (runExceptT parser)
 
-instance Alternative Parser where
-    empty :: Parser a
-    empty = Parser $ \input -> Left $ "Could not parse " ++ input
-    (<|>) :: Parser a -> Parser a -> Parser a
-    p1 <|> p2 = Parser $ \inp ->
-        case (runParser p1 inp) of
-            Right r1 -> Right r1
-            Left e1 -> case (runParser p2 inp) of
-                            Right r2 -> Right r2
-                            Left e2 -> Left e2
+parseSatisfy :: (Char -> Bool) -> Parser Char
+parseSatisfy s = do
+    input <- StateM.get
+    case input of
+        [] -> throwE "Unexpected end of input"
+        (c:cs) ->
+            if s c
+                then do
+                    StateM.put cs
+                    return c
+                else throwE $ "LEFT TO CONSUME: " ++ input ++ "\n"
 
-instance Monad Parser where
-    (>>=) :: Parser a -> (a -> Parser b) -> Parser b
-    ma >>= mf = Parser $ \input ->
-        case runParser ma input of
-            Left e1 -> Left e1
-            Right (a, r1) -> case runParser (mf a) r1 of
-                                Left e2 -> Left e2
-                                Right (b, r2) -> Right (b, r2)
+                       
 
--- Basic Parsers
+parseChar :: Char -> Parser Char
+parseChar c = parseSatisfy (== c)
 
 parseSpace :: Parser Char
 parseSpace = parseChar ' '
 
-parseChar :: Char -> Parser Char
-parseChar c = Parser $ \s -> 
-  case s of
-    [] -> Left "No parser matched"
-    (h:t) -> if c == h 
-             then Right (c, t) 
-             else Left "No parser matched"
 
 parseLetter :: Parser Char
-parseLetter = Parser $ \s -> case s of
-  []       -> Left "No parser matched"
-  (h : t)  -> if C.isLetter h
-                 then Right (h, t)
-                 else Left "No parser matched"
+parseLetter = parseSatisfy C.isLetter
 
 parseDigit :: Parser Char
-parseDigit = Parser $ \s -> case s of
-  []       -> Left "No parser matched"
-  (h : t)  -> if C.isDigit h
-                 then Right (h, t)
-                 else Left "No parser matched"
+parseDigit = parseSatisfy C.isDigit
+
 
 parseString :: String -> Parser String
 parseString [] = return []
 parseString (c:cs) = do
     _ <- parseChar c
     rest <- parseString cs
-    return (c : rest)
+    return (c:rest)
 
 many1 :: Parser a -> Parser [a]
 many1 p = do
   first <- p
   rest  <- many p
-  return (first : rest)  
+  return (first : rest) 
 
 
--- Data Types
 data Query
     = BorrowQuery BookInfo ReaderInfo
     | ReturnQuery BookInfo ReaderInfo
@@ -140,24 +110,33 @@ data ReaderInfo = ReaderInfo Name ReaderID
 type Name = String
 type ReaderID = Int
 
+try :: Parser a -> Parser a
+try p = do
+  input <- lift StateM.get
+  result <- catchE p (\err -> lift (StateM.put input) >> throwE err)
+  return result
+
 query :: Parser Query
 query =
-    parseBorrowQuery
-    <|> parseReturnQuery
-    <|> parseAddBookQuery
-    <|> parseAddReaderQuery
-    <|> parseRemoveBookQuery
-    <|> parseRemoveReaderQuery
-    <|> parseMergeQuery
+   try parseAddBookQuery
+    <|> try parseAddReaderQuery
+    <|> try parseReturnQuery
+    <|> try parseBorrowQuery
+    <|> try parseRemoveBookQuery
+    <|> try parseRemoveReaderQuery
+    <|> try parseMergeQuery
+
 
 
 parseQuery :: String -> Either String Query
 parseQuery s =
-  case runParser query s of
-    Left err -> Left err
-    Right (q, r) -> if null r then Right q else Left ("Unrecognized characters:" ++ r)
+    case parse query s of
+        (Left _, _) -> Left $ "No parser matched"
+        (Right q, r) ->
+            if null r
+                then Right q
+                else Left ("Unrecognized characters: " ++ r)
 
--- Query Parsers
 parseBorrowQuery :: Parser Query
 parseBorrowQuery = do
     _ <- parseString "borrow "
@@ -180,17 +159,19 @@ parseAddBookQuery = do
     book <- parseBookInfo
     return $ AddBookQuery book
 
+parseRemoveBookQuery :: Parser Query
+parseRemoveBookQuery = do
+    _ <- parseString "remove-book "
+    book <- parseBookInfo
+    return $ RemoveBookQuery book
+
+
 parseAddReaderQuery :: Parser Query
 parseAddReaderQuery = do
     _ <- parseString "add-reader "
     reader <- parseReaderInfo
     return $ AddReaderQuery reader
 
-parseRemoveBookQuery :: Parser Query
-parseRemoveBookQuery = do
-    _ <- parseString "remove-book "
-    book <- parseBookInfo
-    return $ RemoveBookQuery book
 
 parseRemoveReaderQuery :: Parser Query
 parseRemoveReaderQuery = do
@@ -231,7 +212,11 @@ parseBookAudience :: Parser BookAudience
 parseBookAudience = parseData ["Children", "Teenager", "Adult"]
 
 parseData :: (Read a) => [String] -> Parser a
-parseData = foldr (\str acc -> parseString str *> return (read str) <|> acc) empty
+parseData []     = empty
+parseData (s:xs) = do
+    _ <- parseString s
+    return (read s)
+    <|> parseData xs
 
 parseReaderInfo :: Parser ReaderInfo
 parseReaderInfo = do
@@ -246,7 +231,6 @@ parseName = many1 parseLetter
 parseReaderID :: Parser ReaderID
 parseReaderID = read <$> many1 parseDigit
 
--- States and State Transitions
 
 data State = State { books :: [BookInfo], readers :: [ReaderInfo] }
 
@@ -324,4 +308,5 @@ mergeBooks book (Just mergequery) s =
     case stateTransition (addBook book s) mergequery of
         Left err -> Left err
         Right (_, newState) -> Right (Just "Book merged and additional query processed", newState)
+
 

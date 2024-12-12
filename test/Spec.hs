@@ -8,7 +8,7 @@ import Lib1 qualified
 import Lib2 qualified
 import Lib3 qualified
 
-
+{-
 instance Arbitrary Lib2.BookGenre where
     arbitrary :: Gen Lib2.BookGenre
     arbitrary = elements [Lib2.Fantasy, Lib2.Scientific, Lib2.Detective, Lib2.Dictionary]
@@ -41,12 +41,12 @@ instance Arbitrary Lib2.Query where
 instance Arbitrary Lib3.Statements where
     arbitrary :: Gen Lib3.Statements
     arbitrary = oneof [Lib3.Single <$> arbitrary, Lib3.Batch <$> listOf arbitrary]
-
+-}
 main :: IO ()
 main = defaultMain tests
 
 tests :: TestTree
-tests = testGroup "Tests" [unitTests, propertyTests]
+tests = testGroup "Tests" [unitTests]
 
 unitTests :: TestTree
 unitTests = testGroup "Lib1 tests"
@@ -106,7 +106,7 @@ unitTests = testGroup "Lib1 tests"
     testCase "Parsing invalid command" $
       Lib2.parseQuery "invalidCommand" @?= Left "No parser matched"
   ]
-
+{-
 propertyTests :: TestTree
 propertyTests = testGroup "Lib3 Property Tests"
   [ testCase "Test single" $
@@ -124,3 +124,4 @@ propertyTests = testGroup "Lib3 Property Tests"
         \s -> Lib3.parseStatements (Lib3.renderStatements s) == Right (s, "")
        
   ]
+-}

@@ -59,14 +59,14 @@ data Command
   deriving (Show, Eq)
 
 parseCommand :: String -> Either String (Command, String)
-parseCommand str = case parse command str of
+parseCommand s = case parse command s of
   (Left err, _) -> Left err
-  (Right cmd, r) -> Right (cmd, r)
+  (Right l, r) -> Right (l, r)
 
 parseStatements :: String -> Either String (Statements, String)
-parseStatements str = case parse statements str of
+parseStatements s = case parse statements s of
   (Left err, _) -> Left err
-  (Right s, r) -> Right (s, r)
+  (Right l, r) -> Right (l, r)
 
 marshallState :: Lib2.State -> Statements
 marshallState (Lib2.State books readers) =

@@ -22,6 +22,7 @@ description:         Please see the README on GitHub at <https://github.com/gith
 dependencies:
 - base >= 4.7 && < 5
 - directory
+- mtl
 
 ghc-options:
 - -Wall
@@ -93,6 +94,8 @@ executables:
     - wreq
     - bytestring
     - string-conversions
+    - free
+    - mtl
   fp2024-four-server:
     main:                Main.hs
     source-dirs:         app4-server
@@ -105,6 +108,8 @@ executables:
     - repline
     - scotty
     - string-conversions
+    - stm
+    - mtl
 
 tests:
   fp2024-test:

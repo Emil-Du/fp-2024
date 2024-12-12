@@ -1,7 +1,5 @@
 begin
-add-book HarryPotter Rowling Fantasy Children;
-add-book Hobbit Tolkien Fantasy Children;
+add-book kazkas kas Fantasy Children;
+add-reader Alice 2;
 add-reader John 12;
-add-reader Mark 123;
-add-reader John 123;
 end

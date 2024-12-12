@@ -1,3 +1,70 @@
+end
+add-reader alice 1;
+add-reader John 12;
+begin
+:paste
+end
+add-book kas kas Detective Adult;
+add-reader Alice 16;
+add-reader Rom 12;
+begin
+:paste
+end
+add-reader Alice 12;
+add-reader John 12;
+begin
+:paste
+end
+add-reader John 123;
+add-reader John 12;
+:paste
+load
+end
+add-reader john 123
+begin
+:paste
+load
+save
+add-reader Alice 2
+end
+add-reader Alice 2
+add-reader Alice 1
+begin
+:paste
+add-book kazkas kas Fantasy Children
+add-book kazkas kas Fantasy CHild
+add-reader John 12
+add-book Name Author Fantasy Children
+remove-book Name Author Fantasy Children
+remove-book Name Author Fantasy Children
+merge kazkas kas Detective Children merge kas kazkas Detective Children
+add-book Name Author Fantasy Children
+add-reader john 12
+add-book Name Author Fantasy Children
+add-reader JOhhny 1
+merge kazkas kas Detective Children merge kas kazkas Detective Children
+merge kazkas kas Detective Children
+return kazkas kas Detective Children
+add-reader John 12
+add-reader "John" 12
+borrow kazkas kas Detective Children
+add-book kazkas kas Fantasy Children
+add-book kazkas kas Fantasy Children
+borrow kazkas kas Detective Children
+add-book kazkas kas Detective Children
+add-book kazkas kas Detective Children
+add-book kazkas kas Fantasy Children
+add-book kazkas kas Fantasy Childre
+add-reader "John" 12
+add-reader John 12
+add-book kazkas kas Fantasy Children
+add-book s
+add-reader John 12
+add-reader John 12
+add-reader John 12
+save
+add-book kazkas kazkas Fantasy Children
+add-reader John 12
 save
 load
 save
@@ -31,70 +98,3 @@ add-reader John 12
 load
 end
 add-reader John 12;
-begin
-:paste 
-load
-save
-add-reader John 1123
-add-reader John 112
-add-reader John 11
-save
-load
-save
-remove-reader John 112
-remove-reader John 1
-load
-add-reader John 12
-load
-save
-end
-add-reader John 112;
-add-reader John 1234;
-begin
-:paste
-remove-reader John 123
-add-reader John 123
-save
-load
-load
-remove-reader John 123
-remove-reader John 123;
-save
-end
-add-reader John 123;
-add-reader John 1;
-begin
-:paste
-load
-save
-merge Hob Tolkien Fantasy Children merge LOTR Tolkien Fantasy Teenager
-merge Hob Tolkien Fantasy Children merge LOTR Tolkien Fantasy
-remove-book Hobbit Tolkien Fantasy Children
-load
-remove-book Hobbit Tolkien Fantasy Children
-load
-remove-book Hobbit Tolkien Fantasy Children
-remove-book Hobbit Tolkien Fantasy Children
-remove-book Hobbit Tolkien Fantasy Children;
-end
-add-reader john 1;
-add-reader john 2;
-add-book Hobbit Tolkien Fantasy Children;
-begin
-:paste
-load
-remove-reader john 2
-remove-reader john 1
-remove john 1
-load
-save
-remove-reader john 3
-load
-remove-reader john 3
-load
-save
-add-book Hobbit Tolkien Fantasy Children
-add-reader john 3
-add-reader john 2
-add-reader john 1
-add-reader john

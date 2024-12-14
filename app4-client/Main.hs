@@ -10,7 +10,7 @@ import qualified Lib2
 import qualified Lib3
 import Network.Wreq
 
--- BNF: root = "add-book " book | "remove-book " book | "add-reader " reader | "remove-reader " reader | "borrow " book reader | "return " book reader | "merge " book
+
 data MyDomainAlgebra a
   = AddBook Lib2.BookInfo a
   | RemoveBook Lib2.BookInfo a

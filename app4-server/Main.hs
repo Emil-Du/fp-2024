@@ -4,34 +4,42 @@ module Main (main) where
 
 import Control.Concurrent.Chan (Chan, newChan)
 import Control.Concurrent.STM (TVar, newTVarIO)
-import Control.Monad.State.Strict
-  ( MonadIO (liftIO),
-  )
-import Data.Maybe (fromMaybe)
+import Control.Monad.IO.Class (liftIO)
 import Data.String.Conversions (cs)
-import GHC.Conc (forkIO)
 import qualified Lib2
 import qualified Lib3
-import qualified Web.Scotty as Scty
+import GHC.Conc (forkIO)
+import Data.Maybe (fromMaybe)
+import Web.Scotty (body, post, scotty, text, ScottyM)
 
 main :: IO ()
 main = do
-  chan <- newChan :: IO (Chan Lib3.StorageOp)
-  state <- newTVarIO Lib2.emptyState
-  _ <- forkIO $ Lib3.storageOpLoop chan
-  Scty.scotty 3000 $
-    Scty.post "/" $ do
-      b <- Scty.body
-      liftIO $ putStrLn ("Request was: " ++ cs b)
-      response <- liftIO $ process state chan $ cs b
-      Scty.text $ cs response
+    state <- newTVarIO Lib2.emptyState
+    storageChan <- newChan
+    _ <- forkIO $ Lib3.storageOpLoop storageChan
+    scotty 3000 $ app state storageChan
 
-process :: TVar Lib2.State -> Chan Lib3.StorageOp -> String -> IO String
-process state storageChan input = case Lib3.parseCommand input of
-  Left e -> return e
-  Right (cmd, "") -> do
-    info <- Lib3.stateTransition state cmd storageChan
-    case info of
-      Left e -> return e
-      Right mb -> return $ fromMaybe "Success" mb
-  Right (_, str) -> return $ "Could not parse: " ++ str
+app :: TVar Lib2.State -> Chan Lib3.StorageOp -> ScottyM ()
+app state storageChan = do
+    post "/" $ do
+        req <- body
+        liftIO $ putStrLn $ "Received request: " ++ cs req
+        response <- liftIO $ handleRequest state storageChan (cs req)
+        text $ cs response
+
+handleRequest :: TVar Lib2.State -> Chan Lib3.StorageOp -> String -> IO String
+handleRequest state storageChan input = 
+    case Lib3.parseCommand input of
+        Left err -> do
+            putStrLn $ "Error parsing request: " ++ err
+            return $ "Error: " ++ err
+        Right (command, _) -> do
+            result <- Lib3.stateTransition state command storageChan
+            case result of
+                Left err -> do
+                    putStrLn $ "Error processing command: " ++ err
+                    return $ "Error: " ++ err
+                Right output -> do
+                    let response = fromMaybe "No response" output
+                    putStrLn $ "Response: " ++ response
+                    return response

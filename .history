@@ -1,3 +1,27 @@
+borrow title author Fantasy Children John 11
+add-reader John 11
+add-book title author Fantasy Children
+borrow title author Fantasy Children John 11
+add-reader John 11
+add-book title author Fantasy Children
+borrow title author Fantasy Children John 11
+borrow Title Autor Fantasy Children John 11
+add-reader John 11
+add-book title author Fantasy Children
+borrow Title Autor Fantasy Children John 11
+merge b a Fantasy Children add-reader John 12
+merge b a Fantasy Children merge b a Fantasy Children
+merge b1 a1 Fantasy Children merge b2 a2 Fantasy Children
+merge b1 a1 Fantasy Children merge b2 a2 Fantasy Children
+merge b1 a1 Fantasy Children add-reader John 12
+add-book s s Detective Children
+add-book s s Dictionary Children
+add-book s s Dictionary Children
+add-book s s Detective Children
+add-book s s Detective Children
+add-book s s Dictionary Children
+add-book s s Fantasy Children
+add-book FPKIQ TCM Dictionary Children
 end
 add-reader alice 1;
 add-reader John 12;
@@ -74,27 +98,3 @@ add-reader Mark 123;
 add-book Hobbit Tolkien Fantasy Children;
 add-book HarryPotter Rowling Fantasy Children;
 begin
-:paste
-remove-reader John 12
-save
-add-reader John 12
-load
-remove-reader John 123
-remove-book Hobbit Tolkien Fantasy Children
-remove-reader Mark 123
-remove-reader Mark 123;
-remove-book HarryPotter Rowling Fantasy Children
-save
-end
-add-book HarryPotter Rowling Fantasy Children;
-add-reader Mark 123;
-begin
-:paste
-add-book Hobbit Tolkien Fantasy Children
-add-reader John 123
-remove-reader John 112
-save
-add-reader John 12
-load
-end
-add-reader John 12;

@@ -47,10 +47,23 @@ instance Show Statements where
   show (Batch b) = "begin\n" ++ concatMap ((++ ";\n") . renderQuery) b ++ "end\n"
 
 renderQuery :: Lib2.Query -> String
-renderQuery (Lib2.AddReaderQuery (Lib2.ReaderInfo name readerid)) = "add-reader " ++ name ++ " " ++ show readerid
-renderQuery (Lib2.AddBookQuery (Lib2.BookInfo title author genre audience)) = "add-book " ++ title ++ " " ++ author ++ " " ++ show genre ++ " " ++ show audience
-renderQuery (Lib2.RemoveReaderQuery (Lib2.ReaderInfo name readerid)) = "remove-reader " ++ name ++ " " ++ show readerid
-renderQuery (Lib2.RemoveBookQuery (Lib2.BookInfo title author genre audience)) = "remove-book " ++ title ++ " " ++ author ++ " " ++ show genre ++ " " ++ show audience
+renderQuery (Lib2.AddReaderQuery (Lib2.ReaderInfo name readerid)) =
+  "add-reader " ++ name ++ " " ++ show readerid
+renderQuery (Lib2.AddBookQuery (Lib2.BookInfo title author genre audience)) =
+  "add-book " ++ title ++ " " ++ author ++ " " ++ show genre ++ " " ++ show audience
+renderQuery (Lib2.RemoveReaderQuery (Lib2.ReaderInfo name readerid)) =
+  "remove-reader " ++ name ++ " " ++ show readerid
+renderQuery (Lib2.RemoveBookQuery (Lib2.BookInfo title author genre audience)) =
+  "remove-book " ++ title ++ " " ++ author ++ " " ++ show genre ++ " " ++ show audience
+renderQuery (Lib2.BorrowQuery (Lib2.BookInfo title author genre audience) (Lib2.ReaderInfo name readerid)) =
+  "borrow " ++ title ++ " " ++ author ++ " " ++ show genre ++ " " ++ show audience ++ " " ++ name ++ " " ++ show readerid
+renderQuery (Lib2.ReturnQuery (Lib2.BookInfo title author genre audience) (Lib2.ReaderInfo name readerid)) =
+  "return " ++ title ++ " " ++ author ++ " " ++ show genre ++ " " ++ show audience ++ " " ++ name ++ " " ++ show readerid
+renderQuery (Lib2.MergeQuery (Lib2.BookInfo title author genre audience) Nothing) =
+  "merge " ++ title ++ " " ++ author ++ " " ++ show genre ++ " " ++ show audience
+renderQuery (Lib2.MergeQuery (Lib2.BookInfo title author genre audience) (Just query)) =
+  "merge " ++ title ++ " " ++ author ++ " " ++ show genre ++ " " ++ show audience ++ " " ++ renderQuery query
+
 
 data Command
   = StatementCommand Statements
@@ -145,7 +158,7 @@ atomicStatements state statement = do
 statements :: Parser Statements
 statements =
   ( do
-      _ <- parseString "begin\n"
+      _ <- Lib2.try $ parseString "begin\n"
       batch <-
         many
           ( do

@@ -25,6 +25,7 @@ module Lib2
     parseReaderInfo,
     parseBookGenre,
     parseBookAudience,
+    try
   ) where
     
 
@@ -214,7 +215,7 @@ parseBookAudience = parseData ["Children", "Teenager", "Adult"]
 parseData :: (Read a) => [String] -> Parser a
 parseData []     = empty
 parseData (s:xs) = do
-    _ <- parseString s
+    _ <- try $ parseString s
     return (read s)
     <|> parseData xs
 

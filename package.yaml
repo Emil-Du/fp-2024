@@ -96,6 +96,7 @@ executables:
     - string-conversions
     - free
     - mtl
+    - stm
   fp2024-four-server:
     main:                Main.hs
     source-dirs:         app4-server

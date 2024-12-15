@@ -1,5 +1,4 @@
 begin
-add-book kazkas kas Fantasy Children;
-add-reader Alice 2;
-add-reader John 12;
+add-book BookOne AuthorOne Fantasy Children;
+add-reader ReaderOne 101;
 end

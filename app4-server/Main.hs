@@ -9,8 +9,7 @@ import Data.String.Conversions (cs)
 import qualified Lib2
 import qualified Lib3
 import GHC.Conc (forkIO)
-import Data.Maybe (fromMaybe)
-import Web.Scotty (body, post, scotty, text, ScottyM)
+import Web.Scotty (body, post, scotty, ScottyM)
 
 main :: IO ()
 main = do
@@ -24,8 +23,8 @@ app state storageChan = do
     post "/" $ do
         req <- body
         liftIO $ putStrLn $ "Received request: " ++ cs req
-        response <- liftIO $ handleRequest state storageChan (cs req)
-        text $ cs response
+        _ <- liftIO $ handleRequest state storageChan (cs req)
+        return ()
 
 handleRequest :: TVar Lib2.State -> Chan Lib3.StorageOp -> String -> IO String
 handleRequest state storageChan input = 
@@ -40,6 +39,8 @@ handleRequest state storageChan input =
                     putStrLn $ "Error processing command: " ++ err
                     return $ "Error: " ++ err
                 Right output -> do
-                    let response = fromMaybe "No response" output
+                    let response = case output of
+                            Just s -> s
+                            Nothing -> "No response"
                     putStrLn $ "Response: " ++ response
                     return response

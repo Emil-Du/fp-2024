@@ -179,8 +179,8 @@ main :: IO ()
 main = do
   --putStrLn "Running with single interpreter:\n"
   --_ <- interpretatorSingle program
-  --putStrLn "\nRunning with batch interpreter:\n"
-  --_ <- interpretatorBatch program []
+  putStrLn "\nRunning with batch interpreter:\n"
+  _ <- interpretatorBatch program []
   --putStrLn "\nRunning with in-memory interpreter:\n"
-  _ <- interpretatorTest program
+  --_ <- interpretatorTest program
   return ()

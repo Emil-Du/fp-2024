@@ -1,3 +1,14 @@
+end
+add-reader John 12;
+begin
+:paste
+end
+add-reader John 12;
+begin
+:paste
+add-reader John 12
+begin
+:paste
 borrow title author Fantasy Children John 11
 add-reader John 11
 add-book title author Fantasy Children
@@ -87,14 +98,3 @@ add-reader John 12
 add-reader John 12
 add-reader John 12
 save
-add-book kazkas kazkas Fantasy Children
-add-reader John 12
-save
-load
-save
-end
-add-reader John 123;
-add-reader Mark 123;
-add-book Hobbit Tolkien Fantasy Children;
-add-book HarryPotter Rowling Fantasy Children;
-begin

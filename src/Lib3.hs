@@ -1,12 +1,14 @@
 {-# LANGUAGE InstanceSigs #-}
 
 module Lib3
-  ( stateTransition,
+  ( 
+    stateTransition,
     StorageOp (..),
     storageOpLoop,
     parseCommand,
     parseStatements,
     marshallState,
+    Command (..),
     renderStatements,
     Statements (..),
   )

@@ -92,7 +92,7 @@ flushBatch [] = return Nothing
 flushBatch batch = Just <$> sendBatch batch
 
 sendBatch :: [Lib2.Query] -> IO String
-sendBatch batch = postToServer (Lib3.renderStatements (Lib3.Batch batch))
+sendBatch batch = postToServer $ Lib3.renderStatements (Lib3.Batch batch)
 
 postToServer :: String -> IO String
 postToServer s = do
@@ -117,38 +117,38 @@ runTestInterpretator state chan (Free step) = do
    
 runStep :: TVar Lib2.State -> Chan Lib3.StorageOp -> MyDomainAlgebra a -> IO a
 runStep state chan (AddBook book next) =
-  printState state (Lib3.StatementCommand $ Lib3.Single $ Lib2.AddBookQuery book) chan >>
+  printRequest state (Lib3.StatementCommand $ Lib3.Single $ Lib2.AddBookQuery book) chan >>
   return (next ())
 runStep state chan (RemoveBook book next) =
-  printState state (Lib3.StatementCommand $ Lib3.Single $ Lib2.RemoveBookQuery book) chan >>
+  printRequest state (Lib3.StatementCommand $ Lib3.Single $ Lib2.RemoveBookQuery book) chan >>
   return (next ())
 runStep state chan (AddReader reader next) =
-  printState state (Lib3.StatementCommand $ Lib3.Single $ Lib2.AddReaderQuery reader) chan >>
+  printRequest state (Lib3.StatementCommand $ Lib3.Single $ Lib2.AddReaderQuery reader) chan >>
   return (next ())
 runStep state chan (RemoveReader reader next) =
-  printState state (Lib3.StatementCommand $ Lib3.Single $ Lib2.RemoveReaderQuery reader) chan >>
+  printRequest state (Lib3.StatementCommand $ Lib3.Single $ Lib2.RemoveReaderQuery reader) chan >>
   return (next ())
 runStep state chan (Borrow book reader next) =
-  printState state (Lib3.StatementCommand $ Lib3.Single $ Lib2.BorrowQuery book reader) chan >>
+  printRequest state (Lib3.StatementCommand $ Lib3.Single $ Lib2.BorrowQuery book reader) chan >>
   return (next ())
 runStep state chan (Return book reader next) =
-  printState state (Lib3.StatementCommand $ Lib3.Single $ Lib2.ReturnQuery book reader) chan >>
+  printRequest state (Lib3.StatementCommand $ Lib3.Single $ Lib2.ReturnQuery book reader) chan >>
   return (next ())
 runStep state chan (Merge book query next) =
-  printState state (Lib3.StatementCommand $ Lib3.Single $ Lib2.MergeQuery book query) chan >>
+  printRequest state (Lib3.StatementCommand $ Lib3.Single $ Lib2.MergeQuery book query) chan >>
   return (next ())
 runStep state chan (Save next) =
-  printState state Lib3.SaveCommand chan >>
+  printRequest state Lib3.SaveCommand chan >>
   return (next ())
 runStep state chan (Load next) =
-  printState state Lib3.LoadCommand chan >>
+  printRequest state Lib3.LoadCommand chan >>
   return (next ())
 
-printState :: TVar Lib2.State -> Lib3.Command -> Chan Lib3.StorageOp -> IO String
-printState state command chan = do
+printRequest :: TVar Lib2.State -> Lib3.Command -> Chan Lib3.StorageOp -> IO String
+printRequest state command chan = do
   putStrLn $ "Received command:\n" ++ show command
-  res <- Lib3.stateTransition state command chan
-  let str = case res of
+  result <- Lib3.stateTransition state command chan
+  let str = case result of
         Left err -> err
         Right (Just s) -> s
         Right Nothing -> "Done."
